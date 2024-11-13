@@ -21,6 +21,7 @@ RAM=${RAM:-40960}
 CPUS=${CPUS:-12}
 DISK=${DISK:-50}
 
+FIP_ADDR={$FIP_ADDR:-192.168.122.222}
 IMAGE_NAME=rhel-ai
 WAIT_FOR_IMAGE=false
 
@@ -91,20 +92,21 @@ openstack server show ${VM_NAME} || {
         echo "Failed to create instance ${VM_NAME}"
         exit 2
     fi
-    fip=$(openstack floating ip create public -f value -c floating_ip_address)
-    openstack server add floating ip ${VM_NAME} ${fip}
+
+    openstack floating ip create --floating-ip-address $FIP_ADDR public
+    openstack server add floating ip ${VM_NAME} $FIP_ADDR
 }
 openstack server list --long
 
-echo "Pinging $fip for 120 seconds until it responds"
-timeout 120 bash -c "while true; do if ping -c1 -i1 $fip &>/dev/null; then echo 'Machine is up and running up'; break; fi; done"
+echo "Pinging $FIP_ADDR for 120 seconds until it responds"
+timeout 120 bash -c "while true; do if ping -c1 -i1 $FIP_ADDR &>/dev/null; then echo 'Machine is up and running up'; break; fi; done"
 
 echo "Changing the default DNS nameserver in the instance to 1.1.1.1"
-ssh -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null -i ./${VM_NAME}.pem cloud-user@${fip} 'echo "nameserver 1.1.1.1" | sudo tee /etc/resolv.conf'
+ssh -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null -i ./${VM_NAME}.pem cloud-user@${FIP_ADDR} 'echo "nameserver 1.1.1.1" | sudo tee /etc/resolv.conf'
 
 if [[ -e ~/pull-secret ]]; then
-    ssh -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null -i ./${VM_NAME}.pem cloud-user@${fip} 'mkdir ~/.docker'
-    scp -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null -i ./${VM_NAME}.pem ~/pull-secret cloud-user@${fip}:~/.docker/config.json
+    ssh -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null -i ./${VM_NAME}.pem cloud-user@${FIP_ADDR} 'mkdir ~/.docker'
+    scp -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null -i ./${VM_NAME}.pem ~/pull-secret cloud-user@${FIP_ADDR}:~/.docker/config.json
 fi
 
-echo "Access VM with: oc rsh openstackclient ssh -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null -i ./${VM_NAME}.pem cloud-user@${fip}"
+echo "Access VM with: oc rsh openstackclient ssh -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null -i ./${VM_NAME}.pem cloud-user@${FIP_ADDR}"
