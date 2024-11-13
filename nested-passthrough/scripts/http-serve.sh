@@ -10,6 +10,16 @@ if [[ -e out/http.pid ]] && grep http.server /proc/$(cat out/http.pid)/cmdline 2
     GOOD_PID=true
 fi
 
+# Find the available Python version
+if command -v python3 &> /dev/null; then
+    PYTHON="python3"
+elif command -v python &> /dev/null; then
+    PYTHON="python"
+else
+    echo "Neither python nor python3 is available"
+    exit 1
+fi
+
 if [[ "${ACTION}" == "start" ]]; then
 	# Even if it's already open, it's better to be sure
 	sudo firewall-cmd --zone=${ZONE} --add-port=${PORT}/tcp
@@ -18,7 +28,7 @@ if [[ "${ACTION}" == "start" ]]; then
         if [[ -n "$BIND" ]]; then
             BIND_ARG="-b $BIND"
         fi
-        sudo python -m http.server $PORT -d ./out ${BIND_ARG} &
+        sudo $PYTHON -m http.server $PORT -d ./out ${BIND_ARG} &
         echo $! > out/http.pid
     else
         echo 'HTTP server already running'
