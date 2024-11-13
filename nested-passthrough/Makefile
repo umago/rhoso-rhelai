@@ -15,6 +15,9 @@ PULL_SECRET ?= ~/pull-secret
 # We ping the CRC version because we don't want to uPULL_SECRET=~/pull-secretse a version too modern
 CRC_VERSION ?= 2.43.0
 
+# Enable monitoring for CRC, required for OpenShift Lightspeed installation
+CRC_MONITORING_ENABLED ?= false
+
 # Reasonable defaults for CRC CPU, DISK, and RAM
 CRC_CPUS ?= 12
 CRC_RAM ?= 24
@@ -90,7 +93,7 @@ create_storage:
 .PHONY: deploy_controlplane
 deploy_controlplane: ## Deploy OCP cluster using CRC, deploy OSP operators, and deploy the OpenStack Control Plane
 	@echo Deploying OCP using CRC && \
-	CRC_VERSION=$(CRC_VERSION) PULL_SECRET=$$(realpath $(PULL_SECRET)) CPUS=$(CRC_CPUS) MEMORY=$$((1024*$(CRC_RAM))) DISK=$(CRC_DISK) make -C $(INSTALL_YAMLS_DIR)/devsetup crc crc_attach_default_interface && \
+	CRC_MONITORING_ENABLED=$(CRC_MONITORING_ENABLED) CRC_VERSION=$(CRC_VERSION) PULL_SECRET=$$(realpath $(PULL_SECRET)) CPUS=$(CRC_CPUS) MEMORY=$$((1024*$(CRC_RAM))) DISK=$(CRC_DISK) make -C $(INSTALL_YAMLS_DIR)/devsetup crc crc_attach_default_interface && \
 	echo Deploying RHOSO operators && \
 	eval $$(crc oc-env) && \
 	( $(MAKE) create_storage || $(MAKE) create_storage ) && \
