@@ -13,7 +13,7 @@ DEPLOY_CINDER ?= false
 PULL_SECRET ?= ~/pull-secret
 
 # We ping the CRC version because we don't want to uPULL_SECRET=~/pull-secretse a version too modern
-CRC_VERSION ?= 2.41.0
+CRC_VERSION ?= 2.43.0
 
 # Reasonable defaults for CRC CPU, DISK, and RAM
 CRC_CPUS ?= 12
